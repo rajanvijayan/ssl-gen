@@ -1,0 +1,20 @@
+{
+  "name": "ssl-gen",
+  "version": "1.0.0",
+  "description": "Interactive SSL certificate generator using acme.sh DNS-01 challenge",
+  "type": "module",
+  "bin": {
+    "ssl-gen": "./bin/ssl-gen.js"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^15.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
