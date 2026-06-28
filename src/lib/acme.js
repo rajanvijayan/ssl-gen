@@ -16,7 +16,11 @@ export async function runIssueForRecords(domains, isRenew) {
     : ['--issue', '--dns', '--keylength', 'ec-256'];
 
   const domainArgs = domains.flatMap(d => ['-d', d]);
-  const args = [...baseArgs, ...domainArgs];
+  const args = [
+    ...baseArgs,
+    ...domainArgs,
+    '--yes-I-know-dns-manual-mode-enough-go-ahead-please',
+  ];
 
   const env = {
     ...process.env,
@@ -34,9 +38,22 @@ export async function runIssueForRecords(domains, isRenew) {
     stdout = result.stdout;
     stderr = result.stderr;
   } catch (err) {
-    if (err.code === CODE_DNS_MANUAL) {
+    if (err.code === CODE_DNS_MANUAL || err.code === 1) {
+      // Code 3 = DNS manual mode (expected). Code 1 = some acme.sh versions
+      // use this when TXT records are printed and user action is needed.
       stdout = err.stdout || '';
       stderr = err.stderr || '';
+
+      // If stderr contains the real error (not the DNS manual notice), re-throw
+      if (
+        err.code === 1 &&
+        stderr &&
+        !stderr.includes('dns manual mode') &&
+        !stdout.includes('TXT value')
+      ) {
+        const detail = (stderr || stdout || err.message || '').trim();
+        throw new Error(`acme.sh exited with code 1:\n${detail}`);
+      }
     } else {
       const detail = (err.stderr || err.stdout || err.message || '').trim();
       throw new Error(`acme.sh exited with code ${err.code}:\n${detail}`);
